@@ -1,4 +1,4 @@
-from opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
+from src.opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
 
 """
     BEQ: reg num offset
@@ -45,7 +45,6 @@ def compute(memory):
     ^==DATA===============^ ^==INSTRUCTIONS==============^
     """
     registers = [8, 0, 0]  # PC, R1 and R2
-    print("     \n\n  ")
 
     # start at 8
     # should follow fetch decode execute
@@ -77,8 +76,13 @@ def compute(memory):
             registers[arg1] = res & 0xff
         elif opcode == MUL:
             res = registers[arg1] * registers[arg2]
-            print("THE RES === ", res, res & 0xff, registers[arg1] , registers[arg2], arg1, arg2, registers)
             registers[arg1] = res & 0xff
+        elif opcode == DIV:
+            res = int(registers[arg1] / registers[arg2])
+            registers[arg1] = res & 0xff #TODO: over flow ?
+        elif opcode == REM:
+            res = registers[arg1] % registers[arg2]
+            registers[arg1] = res & 0xff #TODO: over flow ?
         elif opcode == STORE:
             protect_program_section(memory, arg2)
             memory[arg2] = registers[arg1]
@@ -93,7 +97,6 @@ def compute(memory):
             if registers[arg1] == arg2:
                 # get arg three
                 offset = memory[pc + 3]
-                print("current", pc, "next", registers[0], "new nexzt", registers[0] + offset, arg1, arg2, offset)
                 registers[0] += offset
 
         else:

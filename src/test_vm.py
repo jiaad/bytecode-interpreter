@@ -2,8 +2,8 @@ from collections import namedtuple
 import unittest
 import os
 
-from vm import compute
-from opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
+from src.vm import compute
+from src.opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
 
 VMCase = namedtuple('VMCase', ['x', 'y', 'out'])
 VMTest = namedtuple('VMTest', ['name', 'asm', 'cases'])
@@ -40,19 +40,32 @@ mul  r1 r2
 store r1 0
 halt
 """, [
-    VMCase(5, 5, 25)
+    VMCase(5, 5, 25),
+    VMCase(52, 5, 4)
     ]),
 
-VMTest('MULTIPLE OVERFLOW', """
+VMTest('DIV', """
 load r1 1
 load r2 2
-mul  r1 r2
+div r1 r2
 store r1 0
 halt
 """, [
-    VMCase(52, 5, 4)
-    ])
+    VMCase(5, 5, 1),
+    #VMCase(300, 1, 1),
+    ]),
 
+VMTest('REM', """
+load r1 1
+load r2 2
+rem r1 r2
+store r1 0
+halt
+""", [
+    VMCase(10, 3, 1),
+    VMCase(20, 3, 2),
+    #VMCase(300, 1, 1),
+    ]),
 ]
 
 stretch_goal_tests = [
@@ -167,7 +180,10 @@ def assemble(asm):
             mc.extend([SUB, reg(parts[1]), reg(parts[2])])
         elif op == 'mul':
             mc.extend([MUL, reg(parts[1]), reg(parts[2])])
-            print("MUIUUL",line, [MUL, reg(parts[1]), reg(parts[2])])
+        elif op == 'div':
+            mc.extend([DIV, reg(parts[1]), reg(parts[2])])
+        elif op == 'rem':
+            mc.extend([REM, reg(parts[1]), reg(parts[2])])
         elif op == 'addi':
             mc.extend([ADDI, reg(parts[1]), imm(parts[2])])
         elif op == 'subi':
@@ -187,3 +203,4 @@ def assemble(asm):
 
 if __name__ == '__main__':
     unittest.main()
+
