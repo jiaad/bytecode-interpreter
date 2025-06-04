@@ -16,6 +16,13 @@ registerMap = {
     "r1": 1,
     "r2": 2
 }
+def protect_program_section(memory, index):
+    if index >= 8:
+        raise RuntimeError(f"Segmentation Fault: you are not allowed to write at index {index}")
+
+def protect_memory_pc_access(memory, pc):
+    if pc < 8 and pc > 0xff:
+        raise RuntimeError(f"Segmentation Fault: you are not allowed to read at index {index}")
 
 def compute(memory):
     #print("SEE TTHIS", memory[8],memory)
@@ -37,6 +44,7 @@ def compute(memory):
     # should follow fetch decode execute
     while True:  # keep looping, like a physical computer's clock
         pc = registers[0]
+        protect_memory_pc_access(memory, pc)
         registers[0] += 3
 
         opcode = memory[pc]
@@ -60,8 +68,8 @@ def compute(memory):
             res = registers[arg1]  - registers[arg2]
             registers[arg1] = res & 0xff
         elif opcode == STORE:
+            protect_program_section(memory, arg2)
             memory[arg2] = registers[arg1]
-            # Constants for opcodes
         elif opcode == ADDI:
             registers[arg1] = (arg2 + registers[arg1]) & 0xff
         elif opcode == SUBI:
@@ -72,9 +80,6 @@ def compute(memory):
         else:
             raise ValueError(f"Illegal opcode detected: {opcode}")
        # break
-
-    print("after", list(memory), registers)
-
 
 if __name__ == "__main__":
     r1 = 1
