@@ -31,16 +31,23 @@ def compute(memory):
     ^==DATA===============^ ^==INSTRUCTIONS==============^
     """
     registers = [8, 0, 0]  # PC, R1 and R2
-    pc = registers[0]
+
 
     # start at 8
     # should follow fetch decode execute
     while True:  # keep looping, like a physical computer's clock
+        pc = registers[0]
+        registers[0] += 3
+
         opcode = memory[pc]
         if opcode == HALT:
             break
 
         arg1 =  memory[pc+1]
+        if opcode == JUMP:
+            registers[0] = arg1
+            continue
+
         arg2 =  memory[pc+2]
 
         
@@ -54,17 +61,24 @@ def compute(memory):
             registers[arg1] = res & 0xff
         elif opcode == STORE:
             memory[arg2] = registers[arg1]
+            # Constants for opcodes
+        elif opcode == ADDI:
+            registers[arg1] = (arg2 + registers[arg1]) & 0xff
+        elif opcode == SUBI:
+            registers[arg1] = (registers[arg1] - arg2) & 0xff
+        elif opcode == BEQZ:
+            if registers[arg1] == 0:
+                registers[0] += arg2
         else:
             raise ValueError(f"Illegal opcode detected: {opcode}")
-        pc += 3
        # break
 
-    #print("after", list(memory), registers)
+    print("after", list(memory), registers)
 
 
 if __name__ == "__main__":
     r1 = 1
     r2 = 2
-
-    compute([0, 3, 255, 0, 0, 0, 0, 0, LOAD, r1, 0x01, LOAD, r2, 0x02, ADD, r1, r2,  STORE, r1, 0x00, HALT])
+    compute([0, 3, 45, 0, 0, 0, 0, 0, LOAD, r1, 0x01, BEQZ, r1, 0x02, ADD, r2, r1, SUBI, r1, 0x01, STORE, r2, 0x00, HALT])
+#    compute([0, 3, 45, 0, 0, 0, 0, 0, LOAD, r1, 0x01, LOAD, r2, 0x02, ADDI, r1, 7, JUMP, 22 , SUBI, r1, 0x01, STORE, r1, 0x00, HALT])
     # compute([0, 78, 0, 0, 0, 0, 0, 0, LOAD, "r1", 0x1, HALT])
