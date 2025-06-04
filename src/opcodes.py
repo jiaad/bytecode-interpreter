@@ -1,0 +1,16 @@
+# Constants for opcodes
+LOAD = 0x01
+STORE = 0x02
+ADD = 0x03
+SUB = 0x04
+MUL = 0x05 # TODO
+DIV = 0x06 # TODO
+REM = 0x07 # TODO
+HALT = 0xff
+
+# Stretch goals
+ADDI = 0x15
+SUBI = 0x16
+JUMP = 0x17
+BEQZ = 0x18
+BEQ =  0x19 # three instruction like RISC-V asm

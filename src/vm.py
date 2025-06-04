@@ -1,16 +1,4 @@
-# Constants for opcodes
-LOAD = 0x01
-STORE = 0x02
-ADD = 0x03
-SUB = 0x04
-HALT = 0xff
-
-# Stretch goals
-ADDI = 0x05
-SUBI = 0x06
-JUMP = 0x07
-BEQZ = 0x08
-BEQ =  0x09 # three instruction like RISC-V asm
+from opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
 
 """
     BEQ: reg num offset
@@ -40,6 +28,9 @@ def calc_next_isp(opcode):
     if opcode == BEQ: return 4
     return 3
 
+def protect_data_bound(index):
+    if index >= 0 and index < 8: return
+    raise RuntimeError(f"Segmentation Fault: you are not allowed to write at the index {index}")
 def compute(memory):
     #print("SEE TTHIS", memory[8],memory)
   #  print("before", memory)
@@ -54,6 +45,7 @@ def compute(memory):
     ^==DATA===============^ ^==INSTRUCTIONS==============^
     """
     registers = [8, 0, 0]  # PC, R1 and R2
+    print("     \n\n  ")
 
     # start at 8
     # should follow fetch decode execute
@@ -74,14 +66,18 @@ def compute(memory):
 
         arg2 =  memory[pc+2]
 
-        
-        if opcode == ADD:
+        if opcode == LOAD:
+            protect_data_bound(arg2)
+            registers[arg1] = memory[arg2]
+        elif opcode == ADD:
             res =  registers[arg1] + registers[arg2]
             registers[arg1] = res & 0xff
-        elif opcode == LOAD:
-            registers[arg1] = memory[arg2]
         elif opcode == SUB:
             res = registers[arg1]  - registers[arg2]
+            registers[arg1] = res & 0xff
+        elif opcode == MUL:
+            res = registers[arg1] * registers[arg2]
+            print("THE RES === ", res, res & 0xff, registers[arg1] , registers[arg2], arg1, arg2, registers)
             registers[arg1] = res & 0xff
         elif opcode == STORE:
             protect_program_section(memory, arg2)

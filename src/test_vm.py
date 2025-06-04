@@ -3,6 +3,7 @@ import unittest
 import os
 
 from vm import compute
+from opcodes import LOAD, STORE, ADD, SUB, MUL, DIV, REM , HALT, ADDI, SUBI , JUMP, BEQZ, BEQ
 
 VMCase = namedtuple('VMCase', ['x', 'y', 'out'])
 VMTest = namedtuple('VMTest', ['name', 'asm', 'cases'])
@@ -19,19 +20,39 @@ load r2 2
 add r1 r2
 store r1 0
 halt""", [
-        VMCase(1, 2, 3),     # 1 + 2 = 3
-        VMCase(254, 1, 255), # support max int
-        VMCase(255, 1, 0),   # correctly overflow
+    VMCase(1, 2, 3),     # 1 + 2 = 3
+    VMCase(254, 1, 255), # support max int
+    VMCase(255, 1, 0),   # correctly overflow
     ]),
-    VMTest('Subtract', """
+VMTest('Subtract', """
 load r1 1
 load r2 2
 sub r1 r2
 store r1 0
 halt""", [
-        VMCase(5, 3, 2),
-        VMCase(0, 1, 255),  # correctly overflow backwards
+    VMCase(5, 3, 2),
+    VMCase(0, 1, 255),  # correctly overflow backwards
     ]),
+VMTest('MULTIPLE', """
+load r1 1
+load r2 2
+mul  r1 r2
+store r1 0
+halt
+""", [
+    VMCase(5, 5, 25)
+    ]),
+
+VMTest('MULTIPLE OVERFLOW', """
+load r1 1
+load r2 2
+mul  r1 r2
+store r1 0
+halt
+""", [
+    VMCase(52, 5, 4)
+    ])
+
 ]
 
 stretch_goal_tests = [
@@ -46,19 +67,19 @@ load r2 2
 beqz r2 3
 store r1 0
 halt""", [
-        VMCase(42, 0, 0),   # r2 is zero, so should branch over the store
-        VMCase(42, 1, 42),  # r2 is nonzero, so should store back 42
+    VMCase(42, 0, 0),   # r2 is zero, so should branch over the store
+    VMCase(42, 1, 42),  # r2 is nonzero, so should store back 42
     ]),
-    VMTest('Addi', """
+VMTest('Addi', """
 load r1 1
 addi r1 3
 addi r1 5
 store r1 0
 halt""", [
-        VMCase(0, 0, 8),    # 0 + 3 + 5 = 8
-        VMCase(20, 0, 28),  # 20 + 3 + 5 = 28
+    VMCase(0, 0, 8),    # 0 + 3 + 5 = 8
+    VMCase(20, 0, 28),  # 20 + 3 + 5 = 28
     ]),
-    VMTest('Sum to n', """
+VMTest('Sum to n', """
 load r1 1
 beqz r1 8
 add r2 r1
@@ -66,12 +87,12 @@ subi r1 1
 jump 11
 store r2 0
 halt""", [
-        VMCase(0, 0, 0),
-        VMCase(1, 0, 1),
-        VMCase(5, 0, 15),
-        VMCase(10, 0, 55),
+    VMCase(0, 0, 0),
+    VMCase(1, 0, 1),
+    VMCase(5, 0, 15),
+    VMCase(10, 0, 55),
     ]),
-    VMTest('Sum to n BEQ', """
+VMTest('Sum to n BEQ', """
 load r1 1
 beq r1 0 8
 add r2 r1
@@ -79,10 +100,10 @@ subi r1 1
 jump 11
 store r2 0
 halt""", [
-        VMCase(0, 0, 0),
-        VMCase(1, 0, 1),
-        VMCase(5, 0, 15),
-        VMCase(10, 0, 55),
+    VMCase(0, 0, 0),
+    VMCase(1, 0, 1),
+    VMCase(5, 0, 15),
+    VMCase(10, 0, 55),
     ]),
 ]
 
@@ -137,25 +158,28 @@ def assemble(asm):
             continue
         op = parts[0]
         if op == 'load':
-            mc.extend([0x01, reg(parts[1]), mem(parts[2])])
+            mc.extend([LOAD, reg(parts[1]), mem(parts[2])])
         elif op == 'store':
-            mc.extend([0x02, reg(parts[1]), mem(parts[2])])
+            mc.extend([STORE, reg(parts[1]), mem(parts[2])])
         elif op == 'add':
-            mc.extend([0x03, reg(parts[1]), reg(parts[2])])
+            mc.extend([ADD, reg(parts[1]), reg(parts[2])])
         elif op == 'sub':
-            mc.extend([0x04, reg(parts[1]), reg(parts[2])])
+            mc.extend([SUB, reg(parts[1]), reg(parts[2])])
+        elif op == 'mul':
+            mc.extend([MUL, reg(parts[1]), reg(parts[2])])
+            print("MUIUUL",line, [MUL, reg(parts[1]), reg(parts[2])])
         elif op == 'addi':
-            mc.extend([0x05, reg(parts[1]), imm(parts[2])])
+            mc.extend([ADDI, reg(parts[1]), imm(parts[2])])
         elif op == 'subi':
-            mc.extend([0x06, reg(parts[1]), imm(parts[2])])
+            mc.extend([SUBI, reg(parts[1]), imm(parts[2])])
         elif op == 'jump':
-            mc.extend([0x07, imm(parts[1])])
+            mc.extend([JUMP, imm(parts[1])])
         elif op == 'beqz':
-            mc.extend([0x08, reg(parts[1]), imm(parts[2])])
+            mc.extend([BEQZ, reg(parts[1]), imm(parts[2])])
         elif op == 'halt':
-            mc.append(0xff)
+            mc.append(HALT)
         elif op == 'beq':
-            mc.extend([0x09,  reg(parts[1]), imm(parts[2]),  imm(parts[3])])
+            mc.extend([BEQ,  reg(parts[1]), imm(parts[2]),  imm(parts[3])])
         else:
             raise ValueError(f'Invalid operation: {op}')
     return mc
