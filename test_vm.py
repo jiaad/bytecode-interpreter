@@ -71,6 +71,19 @@ halt""", [
         VMCase(5, 0, 15),
         VMCase(10, 0, 55),
     ]),
+    VMTest('Sum to n BEQ', """
+load r1 1
+beq r1 0 8
+add r2 r1
+subi r1 1
+jump 11
+store r2 0
+halt""", [
+        VMCase(0, 0, 0),
+        VMCase(1, 0, 1),
+        VMCase(5, 0, 15),
+        VMCase(10, 0, 55),
+    ]),
 ]
 
 class TestVM(unittest.TestCase):
@@ -141,6 +154,8 @@ def assemble(asm):
             mc.extend([0x08, reg(parts[1]), imm(parts[2])])
         elif op == 'halt':
             mc.append(0xff)
+        elif op == 'beq':
+            mc.extend([0x09,  reg(parts[1]), imm(parts[2]),  imm(parts[3])])
         else:
             raise ValueError(f'Invalid operation: {op}')
     return mc

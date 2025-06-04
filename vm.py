@@ -10,7 +10,19 @@ ADDI = 0x05
 SUBI = 0x06
 JUMP = 0x07
 BEQZ = 0x08
+BEQ =  0x09 # three instruction like RISC-V asm
 
+"""
+    BEQ: reg num offset
+"""
+
+"""
+BEQZ is something like this but in one line
+    ; Check if 'eax' is zero
+    test eax, eax
+    ; If zero, jump to the label at the relative offset
+    jz target_label
+"""
 
 registerMap = {
     "r1": 1,
@@ -23,6 +35,10 @@ def protect_program_section(memory, index):
 def protect_memory_pc_access(memory, pc):
     if pc < 8 and pc > 0xff:
         raise RuntimeError(f"Segmentation Fault: you are not allowed to read at index {index}")
+
+def calc_next_isp(opcode):
+    if opcode == BEQ: return 4
+    return 3
 
 def compute(memory):
     #print("SEE TTHIS", memory[8],memory)
@@ -39,15 +55,15 @@ def compute(memory):
     """
     registers = [8, 0, 0]  # PC, R1 and R2
 
-
     # start at 8
     # should follow fetch decode execute
     while True:  # keep looping, like a physical computer's clock
         pc = registers[0]
         protect_memory_pc_access(memory, pc)
-        registers[0] += 3
-
         opcode = memory[pc]
+        registers[0] += calc_next_isp(opcode)
+
+
         if opcode == HALT:
             break
 
@@ -77,6 +93,13 @@ def compute(memory):
         elif opcode == BEQZ:
             if registers[arg1] == 0:
                 registers[0] += arg2
+        elif opcode == BEQ:
+            if registers[arg1] == arg2:
+                # get arg three
+                offset = memory[pc + 3]
+                print("current", pc, "next", registers[0], "new nexzt", registers[0] + offset, arg1, arg2, offset)
+                registers[0] += offset
+
         else:
             raise ValueError(f"Illegal opcode detected: {opcode}")
        # break
@@ -84,6 +107,10 @@ def compute(memory):
 if __name__ == "__main__":
     r1 = 1
     r2 = 2
-    compute([0, 3, 45, 0, 0, 0, 0, 0, LOAD, r1, 0x01, BEQZ, r1, 0x02, ADD, r2, r1, SUBI, r1, 0x01, STORE, r2, 0x00, HALT])
+    compute([0, 3, 0, 0, 0, 0, 0, 0, LOAD, r1, 0x01, BEQ, r1, 0x03, 0x09, ADD, r2, r1, SUBI, r1, 0x01, STORE, r2, 0x00, HALT])
+    #compute([0, 3, 45, 0, 0, 0, 0, 0, LOAD, r1, 0x01, BEQZ, r1, 0x02, ADD, r2, r1, SUBI, r1, 0x01, STORE, r2, 0x00, HALT])
 #    compute([0, 3, 45, 0, 0, 0, 0, 0, LOAD, r1, 0x01, LOAD, r2, 0x02, ADDI, r1, 7, JUMP, 22 , SUBI, r1, 0x01, STORE, r1, 0x00, HALT])
     # compute([0, 78, 0, 0, 0, 0, 0, 0, LOAD, "r1", 0x1, HALT])
+
+
+
